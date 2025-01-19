@@ -2,19 +2,25 @@ import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { FileGrid } from '@/components/FileGrid';
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Send } from 'lucide-react';
 
 interface FileItem {
   id: string;
   name: string;
   size: number;
   lastModified: number;
+  content?: string;
 }
 
 const Index = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [question, setQuestion] = useState('');
   const { toast } = useToast();
 
-  const handleUpload = (uploadedFiles: File[]) => {
+  const handleUpload = async (uploadedFiles: File[]) => {
     const newFiles = uploadedFiles.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
@@ -36,18 +42,81 @@ const Index = () => {
     });
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">PDF Manager</h1>
-      
-      <div className="mb-8">
-        <FileUpload onUpload={handleUpload} />
-      </div>
+  const handleAskQuestion = () => {
+    if (!question.trim()) {
+      toast({
+        title: "Please enter a question",
+        description: "Your question cannot be empty",
+        variant: "destructive"
+      });
+      return;
+    }
 
-      <FileGrid 
-        files={files}
-        onFileSelect={handleFileSelect}
-      />
+    // For now, just show a toast. In a future implementation, this would call an AI service
+    toast({
+      title: "Question received",
+      description: "AI processing will be implemented in the next iteration",
+    });
+    setQuestion('');
+  };
+
+  const filteredFiles = files.filter(file => 
+    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Smart Document Manager</h1>
+          <p className="text-muted-foreground">Upload, search, and analyze your documents with AI assistance</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Ask AI Assistant</h2>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ask a question about your documents..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleAskQuestion}>
+                <Send className="h-4 w-4 mr-2" />
+                Ask
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Search Documents</h2>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Search files..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Upload Documents</h2>
+          <FileUpload onUpload={handleUpload} />
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Your Documents</h2>
+          <FileGrid 
+            files={filteredFiles}
+            onFileSelect={handleFileSelect}
+          />
+        </div>
+      </div>
     </div>
   );
 };
