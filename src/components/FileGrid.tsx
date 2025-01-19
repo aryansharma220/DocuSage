@@ -1,21 +1,30 @@
-import { FileText, Search, Grid, List } from 'lucide-react';
+import { FileText, Search, Grid, List, Star, Share2, Tag, MoreVertical } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-interface FileItem {
-  id: string;
-  name: string;
-  size: number;
-  lastModified: number;
-}
+import { FileItem, Tag as TagType } from '@/types/documents';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { cn } from "@/lib/utils";
 
 interface FileGridProps {
   files: FileItem[];
   onFileSelect: (file: FileItem) => void;
+  onToggleFavorite?: (file: FileItem) => void;
 }
 
-export const FileGrid = ({ files, onFileSelect }: FileGridProps) => {
+const tagColors = [
+  'bg-red-100 text-red-800',
+  'bg-blue-100 text-blue-800',
+  'bg-green-100 text-green-800',
+  'bg-yellow-100 text-yellow-800',
+  'bg-purple-100 text-purple-800',
+];
+
+export const FileGrid = ({ files, onFileSelect, onToggleFavorite }: FileGridProps) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -33,6 +42,100 @@ export const FileGrid = ({ files, onFileSelect }: FileGridProps) => {
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString();
+  };
+
+  const renderTags = (tags?: TagType[]) => {
+    if (!tags?.length) return null;
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {tags.map((tag, index) => (
+          <span
+            key={tag.id}
+            className={cn(
+              "px-2 py-1 rounded-full text-xs font-medium",
+              tagColors[index % tagColors.length]
+            )}
+          >
+            {tag.name}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
+  const renderFileCard = (file: FileItem) => {
+    const cardContent = (
+      <>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <FileText className="h-8 w-8 text-blue-600" />
+            {file.favorite && (
+              <Star className="h-4 w-4 text-yellow-400 absolute -top-2 -right-2 fill-current" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{file.name}</p>
+            <p className="text-xs text-gray-500">
+              {formatFileSize(file.size)} • {formatDate(file.lastModified)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {file.shares?.length ? (
+              <HoverCard>
+                <HoverCardTrigger>
+                  <Share2 className="h-4 w-4 text-gray-500" />
+                </HoverCardTrigger>
+                <HoverCardContent>
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Shared with:</h4>
+                    {file.shares.map(share => (
+                      <div key={share.id} className="text-xs">
+                        {share.email} ({share.accessLevel})
+                      </div>
+                    ))}
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            ) : null}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite?.(file);
+              }}
+            >
+              <Star
+                className={cn(
+                  "h-4 w-4",
+                  file.favorite ? "text-yellow-400 fill-current" : "text-gray-400"
+                )}
+              />
+            </Button>
+          </div>
+        </div>
+        {renderTags(file.tags)}
+      </>
+    );
+
+    return viewMode === 'grid' ? (
+      <div
+        key={file.id}
+        className="file-card cursor-pointer group hover:scale-102 transition-all duration-200"
+        onClick={() => onFileSelect(file)}
+      >
+        {cardContent}
+      </div>
+    ) : (
+      <div
+        key={file.id}
+        className="file-card cursor-pointer flex items-center gap-4 group hover:scale-101 transition-all duration-200"
+        onClick={() => onFileSelect(file)}
+      >
+        {cardContent}
+      </div>
+    );
   };
 
   return (
@@ -68,41 +171,11 @@ export const FileGrid = ({ files, onFileSelect }: FileGridProps) => {
 
       {viewMode === 'grid' ? (
         <div className="file-grid">
-          {filteredFiles.map((file) => (
-            <div
-              key={file.id}
-              className="file-card cursor-pointer"
-              onClick={() => onFileSelect(file)}
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="h-8 w-8 text-blue-600" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-gray-500">
-                    {formatFileSize(file.size)} • {formatDate(file.lastModified)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+          {filteredFiles.map(renderFileCard)}
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredFiles.map((file) => (
-            <div
-              key={file.id}
-              className="file-card cursor-pointer flex items-center gap-4"
-              onClick={() => onFileSelect(file)}
-            >
-              <FileText className="h-6 w-6 text-blue-600 flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <p className="text-xs text-gray-500">
-                  {formatFileSize(file.size)} • {formatDate(file.lastModified)}
-                </p>
-              </div>
-            </div>
-          ))}
+          {filteredFiles.map(renderFileCard)}
         </div>
       )}
 

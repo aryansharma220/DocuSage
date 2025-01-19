@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Send, Upload, FileText } from 'lucide-react';
 import { analyzeDocuments } from '@/services/ai';
-import { FileItem } from '@/types/files';
+import { FileItem } from '@/types/documents';
 
 const Index = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -20,7 +20,15 @@ const Index = () => {
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,
-      lastModified: file.lastModified
+      lastModified: file.lastModified,
+      favorite: false,
+      tags: [
+        {
+          id: Math.random().toString(36).substr(2, 9),
+          name: 'New',
+          color: 'blue'
+        }
+      ]
     }));
 
     setFiles(prev => [...prev, ...newFiles]);
@@ -34,6 +42,20 @@ const Index = () => {
     toast({
       title: "File selected",
       description: `Selected ${file.name}`,
+    });
+  };
+
+  const handleToggleFavorite = (file: FileItem) => {
+    setFiles(prev => 
+      prev.map(f => 
+        f.id === file.id 
+          ? { ...f, favorite: !f.favorite }
+          : f
+      )
+    );
+    toast({
+      title: file.favorite ? "Removed from favorites" : "Added to favorites",
+      description: file.name,
     });
   };
 
@@ -93,7 +115,7 @@ const Index = () => {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg">
+            <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
                 <Send className="h-5 w-5" />
                 <h2>Ask AI Assistant</h2>
@@ -109,7 +131,7 @@ const Index = () => {
                 <Button 
                   onClick={handleAskQuestion}
                   disabled={isAnalyzing}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
                 >
                   <Send className="h-4 w-4 mr-2" />
                   {isAnalyzing ? 'Analyzing...' : 'Ask'}
@@ -117,7 +139,7 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg">
+            <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
                 <Search className="h-5 w-5" />
                 <h2>Search Documents</h2>
@@ -135,7 +157,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg">
+          <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
               <Upload className="h-5 w-5" />
               <h2>Upload Documents</h2>
@@ -143,7 +165,7 @@ const Index = () => {
             <FileUpload onUpload={handleUpload} />
           </div>
 
-          <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg">
+          <div className="space-y-4 p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
             <div className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
               <FileText className="h-5 w-5" />
               <h2>Your Documents</h2>
@@ -151,6 +173,7 @@ const Index = () => {
             <FileGrid 
               files={filteredFiles}
               onFileSelect={handleFileSelect}
+              onToggleFavorite={handleToggleFavorite}
             />
           </div>
         </div>
