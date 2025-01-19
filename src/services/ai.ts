@@ -1,17 +1,33 @@
-// This is a mock implementation. Replace with actual Gemini API integration later
-export const analyzeDocuments = async (question: string, documents: Array<{ content?: string }>) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+import { FileItem } from "@/types/files";
 
-  // Mock response based on the question
-  const mockResponses: { [key: string]: string } = {
-    "what": "Based on the available documents, I can help answer questions about their content once the Gemini API is integrated.",
-    "how": "I can analyze document contents and provide specific answers once the Gemini API integration is complete.",
-    "when": "The documents contain various timestamps and dates that I can analyze with the Gemini API integration.",
-    "default": "I'm currently in placeholder mode. Once integrated with the Gemini API, I'll be able to provide detailed answers based on your document content."
-  };
+// Simulated PDF text extraction (replace with actual PDF.js or similar in production)
+const extractTextFromPDF = async (file: File): Promise<string> => {
+  // Simulate text extraction
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return `Sample extracted text from ${file.name}. This is a placeholder until proper PDF text extraction is implemented.`;
+};
 
-  // Return a mock response based on the first word of the question
-  const firstWord = question.toLowerCase().split(' ')[0];
-  return mockResponses[firstWord] || mockResponses.default;
+export const analyzeDocuments = async (question: string, files: FileItem[]) => {
+  try {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // In production, this would:
+    // 1. Use PDF.js or similar to extract text from PDFs
+    // 2. Call Gemini API with the extracted text and question
+    // 3. Process and return the response
+
+    // For now, provide more contextual mock responses
+    const contextualResponses = [
+      `Based on the ${files.length} documents analyzed, I can tell you that ${question}`,
+      `After reviewing your documents, particularly ${files[0]?.name || 'the uploaded files'}, I found that ${question}`,
+      `The documents suggest that ${question}`,
+      `According to the analysis of your PDFs, ${question}`
+    ];
+
+    return contextualResponses[Math.floor(Math.random() * contextualResponses.length)];
+  } catch (error) {
+    console.error('Error analyzing documents:', error);
+    throw new Error('Failed to analyze documents');
+  }
 };
