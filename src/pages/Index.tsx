@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Send } from 'lucide-react';
+import { analyzeDocuments } from '@/services/ai';
 
 interface FileItem {
   id: string;
@@ -18,6 +19,7 @@ const Index = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [question, setQuestion] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const handleUpload = async (uploadedFiles: File[]) => {
@@ -42,7 +44,7 @@ const Index = () => {
     });
   };
 
-  const handleAskQuestion = () => {
+  const handleAskQuestion = async () => {
     if (!question.trim()) {
       toast({
         title: "Please enter a question",
@@ -52,12 +54,23 @@ const Index = () => {
       return;
     }
 
-    // For now, just show a toast. In a future implementation, this would call an AI service
-    toast({
-      title: "Question received",
-      description: "AI processing will be implemented in the next iteration",
-    });
-    setQuestion('');
+    setIsAnalyzing(true);
+    try {
+      const answer = await analyzeDocuments(question, files);
+      toast({
+        title: "AI Response",
+        description: answer,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to analyze documents",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+      setQuestion('');
+    }
   };
 
   const filteredFiles = files.filter(file => 
@@ -81,10 +94,14 @@ const Index = () => {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 className="flex-1"
+                disabled={isAnalyzing}
               />
-              <Button onClick={handleAskQuestion}>
+              <Button 
+                onClick={handleAskQuestion}
+                disabled={isAnalyzing}
+              >
                 <Send className="h-4 w-4 mr-2" />
-                Ask
+                {isAnalyzing ? 'Analyzing...' : 'Ask'}
               </Button>
             </div>
           </div>
